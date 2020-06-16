@@ -1,45 +1,44 @@
 //imports
 const express = require('express');
 const helmet = require('helmet');
-const morgan = require('morgan');//named after dexter
-
-//declare a server..which is imported to index.js
+const morgan = require('morgan');
 const server=express();
-//middleware
+
+const dbConnection = require('./data/data-config')
+
+//routers
+const authRouter = require('./auth/auth-router');
+const usersRouter = require('./users/users-router');
+// const requiresAuth = require('./auth/requires-auth')
+
+//session stuff
+const session = require('express-session'); //install this
+const KnexSessionStore = require('connect-session-knex')(session); //install library pass session
+
+//session config
+const sessionConfig = {
+    name: 'mmm',
+    secret: 'secret',
+    cookie: {
+      maxAge: 1000 * 60 * 10 * 6,
+      secure: false,
+      httpOnly: true,
+    },
+    resave: false,
+    saveUninitialized: true,
+    store: new KnexSessionStore({
+      knex: dbConnection,
+      createtable: true,
+      clearInterval:  1000 * 60 * 60* 24, // one day
+    })
+  };
+
 server.use(morgan());
 server.use(helmet());
-server.use(express.json());//most important!!!
+server.use(express.json());
+//today stuff
+server.use('/auth', authRouter);
+server.use('/users', usersRouter); //add requires auth
+server.use(session(sessionConfig));
 
-//import the helpers/db
-const db = require('./data/helpers/user-helpers')
-
-//export the server
 module.exports = server;
-
-//function 
-//all functions/ requests need req,res...req, is the request to the server.. res, is the response from..
-server.get('/', (req,res) => {
-    res.status(200).json({api: "is up, hello youtube!!!"})
-})
-
-server.get('/users', (req,res) => {
-    db.getUsers()
-    .then(users => {
-        res.status(200).json(users)
-    })
-    .catch(err =>{
-        console.log("this is an error from gets", err)
-        res.status(500).json({Message: "sorry bud"})
-    })
-})
-
-server.get('/users/:id', (req,res) => {
-    const id = req.params.id
-
-    db.getSpecificUser(id)
-    .then(user => {
-        res.status(200).json(user)
-    })
-})
-
-//THATS IT!! A WHOLE SERVER AND DATABASE!!!

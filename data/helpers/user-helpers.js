@@ -14,7 +14,18 @@ function getSpecificUser(id){
     .where({id})
 }
 
+function addUser(user){
+    return db('users')
+    .insert(user)
+}
+
+function findBy(filter) {
+    return db("users").where(filter).orderBy("id");
+  }
+
 module.exports = {
     getUsers,
-    getSpecificUser
+    getSpecificUser,
+    addUser,
+    findBy
 }
